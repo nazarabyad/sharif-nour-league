@@ -4,7 +4,8 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;
 async function loadAll(){
   const q = (t,o)=> { let r = sb.from(t).select("*"); if(o) r = r.order(o); return r; };
   const [t,m,p,c,g] = await Promise.all([q("teams","id"), q("matches","week"), q("players","id"), q("cards","id"), q("goals","id")]);
-  return {teams:t.data||[], matches:m.data||[], players:p.data||[], cards:c.data||[], goals:g.data||[]};
+  const errors = [["teams",t],["matches",m],["players",p],["cards",c],["goals",g]].filter(x=>x[1].error).map(x=>x[0]+": "+x[1].error.message);
+  return {teams:t.data||[], matches:m.data||[], players:p.data||[], cards:c.data||[], goals:g.data||[], errors};
 }
 function standings(teams, matches){
   const r = {};

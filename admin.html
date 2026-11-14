@@ -3,7 +3,7 @@
 <header style="padding-bottom:16px"><div class="top"><img src="logo.png" alt=""><h1>إدارة الاتحاد</h1></div></header>
 <main>
 <div id="login" class="card"><h2>تسجيل الدخول</h2><input id="em" type="email" placeholder="البريد" dir="ltr" style="width:100%"><input id="pw" type="password" placeholder="كلمة المرور" dir="ltr" style="width:100%"><button class="b" id="go">دخول</button><p id="err" class="warn"></p></div>
-<div id="app" style="display:none">
+<div id="app" style="display:none"><div id="errs" class="card warn" style="display:none"></div>
 <div class="card"><button class="b d" id="out">خروج</button> <a href="index.html" style="margin-right:10px">عرض الموقع</a></div>
 
 <div class="card"><h2>إضافة لاعب</h2><div class="row"><select id="pt"></select><input id="pn" placeholder="اسم اللاعب"></div><button class="b" id="addp">إضافة</button>
@@ -33,7 +33,7 @@
 
 <div class="card"><h2>سجل التعديلات</h2><div id="lg"></div></div>
 </div></main>
-<script src="config.js?v=2"></script><script src="common.js?v=2"></script>
+<script src="config.js?v=3"></script><script src="common.js?v=3"></script>
 <script>
 let me="", D, names={};
 const log = w => sb.from("changelog").insert({who:me,what:w});
@@ -56,7 +56,7 @@ function fillPlayers(){
 }
 async function refresh(){
   const keep = ["ct","gt"].map(i=>$("#"+i).value);
-  D = await loadAll(); names={}; D.teams.forEach(t=>names[t.id]=t.name);
+  D = await loadAll(); $("#errs").style.display=D.errors.length?"block":"none"; $("#errs").innerHTML=D.errors.map(esc).join("<br>"); names={}; D.teams.forEach(t=>names[t.id]=t.name);
   const pm = {}; D.players.forEach(p=>pm[p.id]=p);
   const opts = D.teams.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join("");
   ["pt","ct","gt","hm","aw"].forEach(s=>{const v=$("#"+s).value; $("#"+s).innerHTML=opts; if(v)$("#"+s).value=v});
