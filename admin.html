@@ -1,24 +1,44 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>لوحة الاتحاد</title>
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>إدارة الاتحاد</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script></head><body>
-<header><h1>لوحة الاتحاد</h1><p>رابطة الشريف والنور</p></header>
+<header style="padding-bottom:16px"><div class="top"><img src="logo.png" alt=""><h1>إدارة الاتحاد</h1></div></header>
 <main>
-<div id="login" class="card"><input id="em" type="email" placeholder="البريد" dir="ltr"><input id="pw" type="password" placeholder="كلمة المرور" dir="ltr"><button class="b" id="go">دخول</button><p id="err"></p></div>
+<div id="login" class="card"><h2>تسجيل الدخول</h2><input id="em" type="email" placeholder="البريد" dir="ltr" style="width:100%"><input id="pw" type="password" placeholder="كلمة المرور" dir="ltr" style="width:100%"><button class="b" id="go">دخول</button><p id="err" class="warn"></p></div>
 <div id="app" style="display:none">
-<nav><button class="on" data-t="a1">المباريات</button><button data-t="a2">الهدافون</button><button data-t="a3">السجل</button></nav>
-<section id="a1" class="on">
- <div class="card"><b>إضافة مباراة</b><br>
- <input id="wk" type="number" placeholder="الأسبوع" style="width:90px">
- <select id="hm"></select> ضد <select id="aw"></select><br>
- <input id="dt" type="date"><input id="tm" type="time"><button class="b" id="addm">إضافة</button></div>
- <div id="ml"></div></section>
-<section id="a2"><div class="card"><input id="pn" placeholder="اسم اللاعب"><select id="pt"></select><input id="pg" type="number" placeholder="الأهداف" style="width:90px"><button class="b" id="adds">إضافة</button></div><div id="sl"></div></section>
-<section id="a3"><div id="lg"></div></section>
-<button class="b d" id="out">خروج</button>
+<div class="card"><button class="b d" id="out">خروج</button> <a href="index.html" style="margin-right:10px">عرض الموقع</a></div>
+
+<div class="card"><h2>إضافة لاعب</h2><div class="row"><select id="pt"></select><input id="pn" placeholder="اسم اللاعب"></div><button class="b" id="addp">إضافة</button>
+<details><summary>اللاعبون</summary><div id="pl"></div></details></div>
+
+<div class="card"><h2>تسجيل كرت</h2>
+<small class="h">الأسبوع: رقم (اكتب 0 لكرت قبل بداية الدوري). عدد مباريات الإيقاف للأحمر المباشر فقط.</small>
+<div class="row"><select id="ct"></select><select id="cp"></select></div>
+<div class="row"><select id="cty"><option value="yellow">أصفر</option><option value="red">أحمر</option></select><input id="cw" type="number" placeholder="أسبوع"><input id="cs" type="number" value="1" placeholder="إيقاف"></div>
+<button class="b" id="addc">تسجيل</button>
+<details><summary>الكروت المسجلة</summary><div id="cl"></div></details></div>
+
+<div class="card"><h2>تسجيل أهداف</h2><div class="row"><select id="gt"></select><select id="gp"></select></div>
+<div class="row"><input id="gw" type="number" placeholder="أسبوع"><input id="gn" type="number" value="1" placeholder="عدد الأهداف"></div>
+<button class="b" id="addg">تسجيل</button>
+<details><summary>الأهداف المسجلة</summary><div id="gl"></div></details></div>
+
+<div class="card"><h2>المباريات</h2>
+<div class="row"><input id="wk" type="number" placeholder="الأسبوع"><select id="hm"></select><select id="aw"></select></div>
+<div class="row"><input id="dt" type="date"><input id="tm" type="time"></div>
+<button class="b" id="addm">إضافة مباراة</button><div id="ml"></div></div>
+
+<div class="card"><h2>الفرق</h2>
+<small class="h">الأرقام الأولية: لعب، فاز، تعادل، خسر، له، عليه. تُضاف عليها نتائج المباريات المسجلة.</small>
+<div class="row"><input id="nt" placeholder="اسم فريق جديد"><button class="b" id="addt" style="flex:0">إضافة فريق</button></div>
+<div id="tl"></div></div>
+
+<div class="card"><h2>سجل التعديلات</h2><div id="lg"></div></div>
 </div></main>
 <script src="config.js"></script><script src="common.js"></script>
 <script>
 let me="", D, names={};
-const log = (w)=>sb.from("changelog").insert({who:me,what:w});
+const log = w => sb.from("changelog").insert({who:me,what:w});
+const num = v => v===""||v==null ? null : +v;
+const guard = async (p)=>{ const r = await p; if(r && r.error){ alert("خطأ: "+r.error.message); throw r.error } return r };
 $("#go").onclick = async()=>{
   const {data,error} = await sb.auth.signInWithPassword({email:$("#em").value.trim(),password:$("#pw").value});
   if(error){$("#err").textContent="بيانات الدخول غير صحيحة";return}
@@ -26,49 +46,59 @@ $("#go").onclick = async()=>{
 };
 $("#out").onclick = async()=>{await sb.auth.signOut();location.reload()};
 sb.auth.getSession().then(({data})=>{ if(data.session) start(data.session.user.email) });
-async function start(email){
-  me=email; $("#login").style.display="none"; $("#app").style.display="block"; tabs(); await refresh();
+async function start(email){ me=email; $("#login").style.display="none"; $("#app").style.display="block"; await refresh();
+  ["ct","gt"].forEach(id=>$("#"+id).onchange=fillPlayers); fillPlayers(); }
+function fillPlayers(){
+  [["ct","cp"],["gt","gp"]].forEach(([t,p])=>{
+    const ps = D.players.filter(x=>x.team_id==$("#"+t).value);
+    $("#"+p).innerHTML = ps.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join("") || "<option value=''>لا يوجد لاعبون</option>";
+  });
 }
 async function refresh(){
+  const keep = ["ct","gt"].map(i=>$("#"+i).value);
   D = await loadAll(); names={}; D.teams.forEach(t=>names[t.id]=t.name);
+  const pm = {}; D.players.forEach(p=>pm[p.id]=p);
   const opts = D.teams.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join("");
-  ["#hm","#aw","#pt"].forEach(s=>{const v=$(s).value; $(s).innerHTML=opts; if(v)$(s).value=v});
-  $("#ml").innerHTML = D.matches.map(x=>`<div class="card">${matchHTML(x,names)}
-   <input type="number" id="h${x.id}" value="${x.home_goals??""}" style="width:60px"> - <input type="number" id="a${x.id}" value="${x.away_goals??""}" style="width:60px">
-   <button class="b" onclick="fin(${x.id})">حفظ النتيجة</button>
-   <button class="b" onclick="post(${x.id})">تأجيل</button>
-   <button class="b" onclick="sch(${x.id})">إعادة جدولة</button>
-   <button class="b d" onclick="delm(${x.id})">حذف</button></div>`).join("");
-  $("#sl").innerHTML = D.scorers.map(s=>`<div class="card">${esc(s.player)} (${esc(names[s.team_id])}) —
-   <input type="number" id="g${s.id}" value="${s.goals}" style="width:60px">
-   <button class="b" onclick="sg(${s.id})">تعديل</button><button class="b d" onclick="dels(${s.id})">حذف</button></div>`).join("");
+  ["pt","ct","gt","hm","aw"].forEach(s=>{const v=$("#"+s).value; $("#"+s).innerHTML=opts; if(v)$("#"+s).value=v});
+  ["ct","gt"].forEach((id,i)=>{ if(keep[i]) $("#"+id).value=keep[i] }); fillPlayers();
+  $("#pl").innerHTML = D.players.map(p=>`<div class="li"><span>${esc(p.name)} — ${esc(names[p.team_id])}</span><button class="b d s" onclick="del('players',${p.id},'حذف لاعب ${esc(p.name)}')">حذف</button></div>`).join("") || "<p class='empty'>لا يوجد لاعبون.</p>";
+  $("#cl").innerHTML = D.cards.map(c=>`<div class="li"><span><i class="${c.type==="red"?"r":"y"}"></i> ${esc(pm[c.player_id]?.name)} (${esc(names[c.team_id])}) — أسبوع ${c.week}${c.type==="red"?` — إيقاف ${c.susp}`:""}</span><button class="b d s" onclick="del('cards',${c.id},'حذف كرت')">حذف</button></div>`).join("") || "<p class='empty'>لا توجد كروت.</p>";
+  $("#gl").innerHTML = D.goals.map(g=>`<div class="li"><span>${esc(pm[g.player_id]?.name)} (${esc(names[g.team_id])}) — أسبوع ${g.week} — ${g.goals} هدف</span><button class="b d s" onclick="del('goals',${g.id},'حذف أهداف')">حذف</button></div>`).join("") || "<p class='empty'>لا توجد أهداف.</p>";
+  $("#ml").innerHTML = D.matches.map(x=>`<div class="card" style="margin:8px 0">${matchHTML(x,names)}
+   <div class="row"><input type="number" id="h${x.id}" value="${x.home_goals??""}"><input type="number" id="a${x.id}" value="${x.away_goals??""}"></div>
+   <button class="b s" onclick="fin(${x.id})">حفظ النتيجة</button> <button class="b s" onclick="post(${x.id})">تأجيل</button>
+   <button class="b s" onclick="sch(${x.id})">جدولة</button> <button class="b d s" onclick="delm(${x.id})">حذف</button></div>`).join("");
+  $("#tl").innerHTML = D.teams.map(t=>`<div class="card" style="margin:8px 0"><input id="tn${t.id}" value="${esc(t.name)}" style="width:100%">
+   <div class="tg">${["p","w","d","l","gf","ga"].map(k=>`<input type="number" id="t${k}${t.id}" value="${t["base_"+k]}">`).join("")}</div>
+   <button class="b s" onclick="savet(${t.id})">حفظ</button> <button class="b d s" onclick="del('teams',${t.id},'حذف فريق ${esc(t.name)}')">حذف</button></div>`).join("");
   const {data} = await sb.from("changelog").select("*").order("at",{ascending:false}).limit(50);
-  $("#lg").innerHTML = (data||[]).map(r=>`<div class="card">${esc(r.what)}<br><small>${esc(r.who)} — ${new Date(r.at).toLocaleString("ar")}</small></div>`).join("");
+  $("#lg").innerHTML = (data||[]).map(r=>`<div class="li"><span>${esc(r.what)}<br><small>${esc(r.who)} — ${new Date(r.at).toLocaleString("ar")}</small></span></div>`).join("");
 }
-$("#addm").onclick = async()=>{
-  const h=+$("#hm").value, a=+$("#aw").value; if(h===a) return alert("اختر فريقين مختلفين");
-  await sb.from("matches").insert({week:+$("#wk").value||null,home_id:h,away_id:a,match_date:$("#dt").value||null,match_time:$("#tm").value||null});
-  await log(`إضافة مباراة ${names[h]} ضد ${names[a]}`); refresh();
-};
-async function fin(id){
-  const h=$("#h"+id).value, a=$("#a"+id).value; if(h===""||a==="") return alert("أدخل النتيجة");
+async function del(table,id,what){ if(!confirm("تأكيد: "+what+"؟")) return; await guard(sb.from(table).delete().eq("id",id)); await log(what); refresh(); }
+$("#addp").onclick = async()=>{ const n=$("#pn").value.trim(); if(!n) return;
+  await guard(sb.from("players").insert({name:n,team_id:+$("#pt").value})); await log(`إضافة لاعب ${n} (${names[$("#pt").value]})`); $("#pn").value=""; await refresh(); };
+$("#addc").onclick = async()=>{ const p=+$("#cp").value; if(!p) return alert("اختر لاعباً");
+  const ty=$("#cty").value;
+  await guard(sb.from("cards").insert({player_id:p,team_id:+$("#ct").value,week:num($("#cw").value)??0,type:ty,susp:ty==="red"?(num($("#cs").value)||1):0}));
+  await log(`كرت ${ty==="red"?"أحمر":"أصفر"} للاعب ${$("#cp").selectedOptions[0].text}`); await refresh(); alert("تم التسجيل"); };
+$("#addg").onclick = async()=>{ const p=+$("#gp").value; if(!p) return alert("اختر لاعباً");
+  await guard(sb.from("goals").insert({player_id:p,team_id:+$("#gt").value,week:num($("#gw").value)??0,goals:num($("#gn").value)||1}));
+  await log(`${$("#gn").value||1} هدف للاعب ${$("#gp").selectedOptions[0].text}`); await refresh(); alert("تم التسجيل"); };
+$("#addm").onclick = async()=>{ const h=+$("#hm").value, a=+$("#aw").value; if(h===a) return alert("اختر فريقين مختلفين");
+  await guard(sb.from("matches").insert({week:num($("#wk").value),home_id:h,away_id:a,match_date:$("#dt").value||null,match_time:$("#tm").value||null}));
+  await log(`إضافة مباراة ${names[h]} ضد ${names[a]}`); refresh(); };
+async function fin(id){ const h=$("#h"+id).value, a=$("#a"+id).value; if(h===""||a==="") return alert("أدخل النتيجة");
   const x=D.matches.find(m=>m.id===id);
-  await sb.from("matches").update({home_goals:+h,away_goals:+a,status:"finished"}).eq("id",id);
-  await log(`نتيجة ${names[x.home_id]} ${h}-${a} ${names[x.away_id]}`); refresh();
-}
+  await guard(sb.from("matches").update({home_goals:+h,away_goals:+a,status:"finished"}).eq("id",id));
+  await log(`نتيجة ${names[x.home_id]} ${h}-${a} ${names[x.away_id]}`); refresh(); }
 async function post(id){ const x=D.matches.find(m=>m.id===id);
-  await sb.from("matches").update({status:"postponed"}).eq("id",id); await log(`تأجيل ${names[x.home_id]} ضد ${names[x.away_id]}`); refresh(); }
-async function sch(id){ const d=prompt("التاريخ الجديد (مثال 2026-11-20)"); if(!d) return; const t=prompt("الوقت (مثال 17:00)")||null;
-  const x=D.matches.find(m=>m.id===id);
-  await sb.from("matches").update({status:"scheduled",match_date:d,match_time:t,home_goals:null,away_goals:null}).eq("id",id);
+  await guard(sb.from("matches").update({status:"postponed"}).eq("id",id)); await log(`تأجيل ${names[x.home_id]} ضد ${names[x.away_id]}`); refresh(); }
+async function sch(id){ const d=prompt("التاريخ الجديد (مثال 2026-11-20)"); if(!d) return; const t=prompt("الوقت (مثال 17:00)")||null; const x=D.matches.find(m=>m.id===id);
+  await guard(sb.from("matches").update({status:"scheduled",match_date:d,match_time:t,home_goals:null,away_goals:null}).eq("id",id));
   await log(`جدولة ${names[x.home_id]} ضد ${names[x.away_id]} إلى ${d}`); refresh(); }
-async function delm(id){ if(!confirm("حذف المباراة؟")) return; const x=D.matches.find(m=>m.id===id);
-  await sb.from("matches").delete().eq("id",id); await log(`حذف مباراة ${names[x.home_id]} ضد ${names[x.away_id]}`); refresh(); }
-$("#adds").onclick = async()=>{
-  if(!$("#pn").value.trim()) return;
-  await sb.from("scorers").insert({player:$("#pn").value.trim(),team_id:+$("#pt").value,goals:+$("#pg").value||0});
-  await log(`إضافة هداف ${$("#pn").value}`); $("#pn").value=""; refresh();
-};
-async function sg(id){ await sb.from("scorers").update({goals:+$("#g"+id).value}).eq("id",id); await log("تعديل أهداف لاعب"); refresh(); }
-async function dels(id){ if(!confirm("حذف اللاعب؟")) return; await sb.from("scorers").delete().eq("id",id); await log("حذف لاعب"); refresh(); }
+async function delm(id){ const x=D.matches.find(m=>m.id===id); await del("matches",id,`حذف مباراة ${names[x.home_id]} ضد ${names[x.away_id]}`); }
+$("#addt").onclick = async()=>{ const n=$("#nt").value.trim(); if(!n) return;
+  await guard(sb.from("teams").insert({name:n})); await log("إضافة فريق "+n); $("#nt").value=""; refresh(); };
+async function savet(id){ const o={name:$("#tn"+id).value.trim()}; ["p","w","d","l","gf","ga"].forEach(k=>o["base_"+k]=+$("#t"+k+id).value||0);
+  await guard(sb.from("teams").update(o).eq("id",id)); await log("تعديل بيانات فريق "+o.name); refresh(); alert("تم الحفظ"); }
 </script></body></html>

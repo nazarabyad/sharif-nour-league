@@ -1,22 +1,26 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>رابطة الشريف والنور الرياضية</title>
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>دوري الشريف والنور</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script></head><body>
-<header><h1>رابطة الشريف والنور الرياضية</h1><p>دوري الموسم الرياضي 2026–2027</p></header>
-<nav><button class="on" data-t="t1">الترتيب</button><button data-t="t2">المباريات</button><button data-t="t3">الهدافون</button></nav>
+<header><div class="top"><img src="logo.png" alt=""><h1>دوري الشريف والنور</h1></div>
+<nav><button class="on" data-t="t1">الترتيب</button><button data-t="t2">الجدول</button><button data-t="t3">الهدافون</button><button data-t="t4">الإيقافات</button></nav></header>
 <main>
-<section id="t1" class="on"><div class="wrap" id="tbl">جارٍ التحميل...</div><button class="wa" id="w1">مشاركة الترتيب في واتساب</button></section>
-<section id="t2"><div id="fx"></div><button class="wa" id="w2">مشاركة المباريات في واتساب</button></section>
-<section id="t3"><div class="wrap" id="sc"></div></section>
+<section id="t1" class="on"><div class="card"><h2>ترتيب الدوري</h2><div id="tbl">جارٍ التحميل...</div></div><button class="wa" id="w1">مشاركة الترتيب في واتساب</button></section>
+<section id="t2"><div class="card"><h2>جدول المباريات</h2><div id="fx"></div></div><button class="wa" id="w2">مشاركة المباريات في واتساب</button></section>
+<section id="t3"><div class="card"><h2>الهدافون</h2><div id="sc"></div></div></section>
+<section id="t4"><div class="card"><h2>الإيقافات والكروت</h2><div id="sp"></div></div></section>
 </main>
 <script src="config.js"></script><script src="common.js"></script>
 <script>
 tabs();
 (async()=>{
-  const d = await loadAll(); const names = {}; d.teams.forEach(t=>names[t.id]=t.name);
-  const st = standings(d.teams, d.matches);
+  const D = await loadAll(); const names = {}; D.teams.forEach(t=>names[t.id]=t.name);
+  const st = standings(D.teams, D.matches);
   $("#tbl").innerHTML = tableHTML(st);
-  $("#fx").innerHTML = fixturesHTML(d.matches, names);
-  $("#sc").innerHTML = d.scorers.length ? `<table><tr><th>م</th><th>اللاعب</th><th>الفريق</th><th>أهداف</th></tr>`+d.scorers.map((s,i)=>`<tr><td>${i+1}</td><td class="n">${esc(s.player)}</td><td>${esc(names[s.team_id])}</td><td class="pts">${s.goals}</td></tr>`).join("")+`</table>` : "<p>لم تُسجَّل أهداف بعد.</p>";
-  $("#w1").onclick = ()=> shareWA("🏆 رابطة الشريف والنور - الترتيب\n\n"+st.map((o,i)=>`${i+1}- ${o.name}  لعب ${o.p}  نقاط ${o.pts}`).join("\n"));
-  $("#w2").onclick = ()=> shareWA("⚽ مباريات رابطة الشريف والنور\n\n"+d.matches.map(x=>`${names[x.home_id]} ${x.status==="finished"?x.home_goals+"-"+x.away_goals:x.status==="postponed"?"(مؤجلة)":"ضد"} ${names[x.away_id]} ${x.match_date||""} ${x.match_time||""}`).join("\n"));
+  $("#fx").innerHTML = fixturesHTML(D.matches, names);
+  const sc = scorersList(D);
+  $("#sc").innerHTML = sc.length ? `<div class="wrap"><table><tr><th>#</th><th class="n">اللاعب</th><th>الفريق</th><th>أهداف</th></tr>`+sc.map((o,i)=>`<tr><td>${i+1}</td><td class="n">${esc(o.p.name)}</td><td>${esc(names[o.p.team_id])}</td><td class="pts">${o.n}</td></tr>`).join("")+`</table></div>` : "<p class='empty'>لم تُسجَّل أهداف بعد.</p>";
+  const sp = suspList(D);
+  $("#sp").innerHTML = sp.length ? `<small class="h">كل ${window.YELLOW_LIMIT} كروت صفراء = إيقاف مباراة، والأحمر حسب قرار الاتحاد.</small><div class="wrap"><table><tr><th class="n">اللاعب</th><th>الفريق</th><th><span class="y"></span></th><th><span class="r"></span></th><th>الإيقاف</th></tr>`+sp.map(o=>`<tr><td class="n">${esc(o.p.name)}</td><td>${esc(names[o.p.team_id])}</td><td>${o.y}</td><td>${o.r}</td><td>${o.total>0?`<span class="warn">${o.total} مباراة</span>`:o.edge?`<span class="warn">على الحافة</span>`:`<span class="ok">—</span>`}</td></tr>`).join("")+`</table></div>` : "<p class='empty'>لا توجد كروت مسجلة.</p>";
+  $("#w1").onclick = ()=> shareWA("🏆 دوري الشريف والنور - الترتيب\n\n"+st.map((o,i)=>`${i+1}- ${o.name}  لعب ${o.p}  نقاط ${o.pts}`).join("\n"));
+  $("#w2").onclick = ()=> shareWA("⚽ مباريات دوري الشريف والنور\n\n"+D.matches.map(x=>`${names[x.home_id]} ${x.status==="finished"?x.home_goals+"-"+x.away_goals:x.status==="postponed"?"(مؤجلة)":"ضد"} ${names[x.away_id]} ${x.match_date||""} ${x.match_time||""}`).join("\n"));
 })();
 </script></body></html>

@@ -1,3 +1,2 @@
-1) ارفع كل الملفات (index.html, admin.html, common.js, config.js) على مستودع GitHub
-2) فعّل GitHub Pages من Settings > Pages
-3) الصفحة العامة: index.html  — صفحة الاتحاد: admin.html
+ارفع الملفات (index.html, admin.html, common.js, config.js, logo.png) على GitHub بنفس الأسماء لتحلّ محل القديمة.
+وشغّل schema2.sql في Supabase > SQL Editor مرة واحدة.
